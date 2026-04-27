@@ -165,5 +165,3 @@ networks:
     driver: bridge
   onlyoffice-network:
     driver: bridge
-  talk-network:
-    driver: bridge
