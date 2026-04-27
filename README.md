@@ -109,7 +109,7 @@ This deletes all Docker volumes (files, database, caches) — use with caution.
 | `NEXTCLOUD_SMTP_AUTH_TYPE` | Auth type (e.g. `LOGIN`).                                |
 | `NEXTCLOUD_SMTP_USER`      | SMTP username.                                           |
 | `NEXTCLOUD_SMTP_PASSWORD`  | SMTP password. Supports `NEXTCLOUD_SMTP_PASSWORD_FILE`.  |
-| `NEXTCLOUD_SMTP_FROM`      | From address local part (e.g. `cloud`).                  |
+| `NEXTCLOUD_SMTP_FROM`      | From address user part (e.g. `cloud`).                   |
 | `NEXTCLOUD_SMTP_DOMAIN`    | From address domain.                                     |
 
 ## Advanced Usage
