@@ -123,7 +123,7 @@ services:
     image: ghcr.io/nextcloud-releases/aio-talk:latest
     environment:
       NC_DOMAIN: "cloud.example.com"
-      TALK_HOST: "talk.example.com"
+      TALK_HOST: "nc-talk.example.com"
       TALK_PORT: 3478
       TURN_SECRET: "CHANGE_ME" # Use: openssl rand -hex 64
       SIGNALING_SECRET: "CHANGE_ME" # Use: openssl rand -hex 64
@@ -132,11 +132,9 @@ services:
       traefik.enable: true
       traefik.http.services.nextcloud-talk-service.loadbalancer.server.port: 8081
       traefik.http.routers.nextcloud-talk-router.service: nextcloud-talk-service
-      traefik.http.routers.nextcloud-talk-router.rule: "Host(`cloud.example.com`) && PathPrefix(`/services/talk/`)"
+      traefik.http.routers.nextcloud-talk-router.rule: "Host(`nc-talk.example.com`)"
       traefik.http.routers.nextcloud-talk-router.entrypoints: "websecure"
       traefik.http.routers.nextcloud-talk-router.tls: true
-      traefik.http.routers.nextcloud-talk-router.middlewares: "nextcloud-talk-strip"
-      traefik.http.middlewares.nextcloud-talk-strip.stripprefix.prefixes: "/services/talk"
       traefik.docker.network: "ingress_global_network"
     ports:
       - "3478:3478/tcp"
