@@ -1,0 +1,144 @@
+name: ${COMPOSE_NAME}
+
+services:
+  app:
+    image: ${NEXTCLOUD_CONTAINER_NAME}:${NEXTCLOUD_CONTAINER_VERSION}
+    environment:
+      # Main configuration
+      NEXTCLOUD_SCHEME: ${NEXTCLOUD_SCHEME}
+      NEXTCLOUD_DOMAINS: ${NEXTCLOUD_DOMAINS}
+      NEXTCLOUD_MAIN_DOMAIN: ${NEXTCLOUD_MAIN_DOMAIN}
+      NEXTCLOUD_PHONE_REGION: ${NEXTCLOUD_PHONE_REGION}
+      # DB configuration
+      NEXTCLOUD_DB_TYPE: ${NEXTCLOUD_DATABASE_TYPE}
+      NEXTCLOUD_DB_HOST: ${NEXTCLOUD_DATABASE_HOST}
+      NEXTCLOUD_DB_NAME: ${MARIADB_DATABASE}
+      NEXTCLOUD_DB_USER: ${MARIADB_USER}
+      NEXTCLOUD_DB_PASSWORD: ${MARIADB_PASSWORD}
+      # Cache configuration
+      NEXTCLOUD_CACHE_MODE: ${NEXTCLOUD_CACHE_MODE}
+      NEXTCLOUD_CACHE_REDIS_HOST: ${NEXTCLOUD_CACHE_REDIS_HOST}
+      NEXTCLOUD_CACHE_REDIS_PORT: ${REDIS_PORT}
+      # Proxy configuration
+      NEXTCLOUD_TRUSTED_PROXIES: ${NEXTCLOUD_TRUSTED_PROXIES:-}
+      # Mail configuration
+      NEXTCLOUD_SMTP_DOMAIN: ${NEXTCLOUD_SMTP_DOMAIN}
+      NEXTCLOUD_SMTP_FROM: ${NEXTCLOUD_SMTP_FROM}
+    ports:
+      - "80:80"
+    networks:
+      - database-network
+      - cache-network
+      - onlyoffice-network
+      - talk-network
+    volumes:
+      - app-scripts:/home/app
+      - app-storage:/home/files
+    healthcheck:
+      test: [ "CMD", "/bin/healthcheck.sh" ]
+      start_period: 30s
+      start_interval: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: always
+
+  database:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_AUTO_UPGRADE: "yes"
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - database-network
+    volumes:
+      - database-storage:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 10s
+      start_interval: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  cache:
+    image: valkey/valkey:9-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - cache-network
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "-p", "${REDIS_PORT}", "ping" ]
+      start_period: 10s
+      start_interval: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - valkey-server
+      - --port ${REDIS_PORT}
+    restart: always
+
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    environment:
+      JWT_SECRET: ${ONLYOFFICE_SECRET}
+    ports:
+      - "8080:80"
+    networks:
+      - onlyoffice-network
+    volumes:
+      - onlyoffice-storage:/var/www/onlyoffice/Data
+      - onlyoffice-logs:/var/log/onlyoffice
+    restart: always
+
+  talk:
+    image: ghcr.io/nextcloud-releases/aio-talk:latest
+    hostname: "${COMPOSE_PROJECT_NAME}-talk"
+    environment:
+      NC_DOMAIN: ${NEXTCLOUD_MAIN_DOMAIN}
+      TALK_HOST: ${NEXTCLOUD_TALK_DOMAIN}
+      TALK_PORT: 3478
+      TURN_SECRET: ${NEXTCLOUD_TALK_TURN_SECRET}
+      SIGNALING_SECRET: ${NEXTCLOUD_TALK_SIGNALING_SECRET}
+      INTERNAL_SECRET: ${NEXTCLOUD_TALK_INTERNAL_SECRET}
+    ports:
+      - "8081:8081"
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    networks:
+      - talk-network
+    restart: always
+
+volumes:
+  app-scripts:
+    driver: local
+  app-storage:
+    driver: local
+  database-storage:
+    driver: local
+  onlyoffice-storage:
+    driver: local
+  onlyoffice-logs:
+    driver: local
+
+
+networks:
+  database-network:
+    driver: bridge
+  cache-network:
+    driver: bridge
+  onlyoffice-network:
+    driver: bridge
+  talk-network:
+    driver: bridge

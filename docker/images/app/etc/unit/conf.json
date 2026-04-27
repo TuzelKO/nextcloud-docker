@@ -1,0 +1,305 @@
+{
+    "settings": {
+        "http": {
+            "server_version": false,
+            "max_body_size": 107374182400,
+            "body_read_timeout": 300,
+            "header_read_timeout": 30,
+            "send_timeout": 60,
+            "idle_timeout": 180
+        }
+    },
+
+    "listeners": {
+        "*:80": {
+            "pass": "routes/nextcloud"
+        }
+    },
+
+    "routes": {
+        "nextcloud": [
+            {
+                "match": {
+                    "uri": "/",
+                    "headers": {
+                        "User-Agent": "DavClnt*"
+                    }
+                },
+                "action": {
+                    "return": 302,
+                    "location": "/remote.php/webdav$request_uri"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": "/"
+                },
+                "action": {
+                    "rewrite": "/index.php$request_uri",
+                    "pass": "applications/nextcloud/direct",
+                    "response_headers": {
+                        "Referrer-Policy":                   "no-referrer",
+                        "X-Content-Type-Options":            "nosniff",
+                        "X-Frame-Options":                   "SAMEORIGIN",
+                        "X-Permitted-Cross-Domain-Policies": "none",
+                        "X-Robots-Tag":                      "noindex, nofollow"
+                    }
+                }
+            },
+
+            {
+                "match": {
+                    "uri": "/robots.txt"
+                },
+                "action": {
+                    "share": "/home/app$uri"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "/.well-known/carddav",
+                        "/.well-known/caldav"
+                    ]
+                },
+                "action": {
+                    "return": 301,
+                    "location": "/remote.php/dav/"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "/.well-known/acme-challenge/*",
+                        "/.well-known/pki-validation/*"
+                    ]
+                },
+                "action": {
+                    "share": "/home/app$uri",
+                    "fallback": {
+                        "return": 404
+                    }
+                }
+            },
+
+            {
+                "match": {
+                    "uri": "/.well-known/*"
+                },
+                "action": {
+                    "return": 301,
+                    "location": "/index.php$request_uri"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "/build",  "/build/*",
+                        "/tests",  "/tests/*",
+                        "/config", "/config/*",
+                        "/lib",    "/lib/*",
+                        "/3rdparty", "/3rdparty/*",
+                        "/templates", "/templates/*",
+                        "/data",   "/data/*"
+                    ]
+                },
+                "action": {
+                    "return": 404
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "/.*",
+                        "/autotest*",
+                        "/occ*",
+                        "/issue*",
+                        "/indie*",
+                        "/db_*",
+                        "/console*"
+                    ]
+                },
+                "action": {
+                    "return": 404
+                }
+            },
+
+            {
+                "match": {
+                    "uri": ["/ocs-provider", "/ocs-provider/"]
+                },
+                "action": {
+                    "rewrite": "/ocs-provider/index.php",
+                    "pass": "applications/nextcloud/direct"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": ["/updater", "/updater/"]
+                },
+                "action": {
+                    "rewrite": "/updater/index.php",
+                    "pass": "applications/nextcloud/direct"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "/index.php",       "/index.php/*",
+                        "/remote.php",      "/remote.php/*",
+                        "/public.php",      "/public.php/*",
+                        "/cron.php",
+                        "/status.php",
+                        "/ocs/v1.php",      "/ocs/v1.php/*",
+                        "/ocs/v2.php",      "/ocs/v2.php/*",
+                        "/ocs-provider/*.php",
+                        "/core/ajax/update.php",
+                        "/updater/*.php",   "/updater/*.php/*",
+                        "*/richdocumentscode/proxy.php",
+                        "*/richdocumentscode_arm64/proxy.php"
+                    ]
+                },
+                "action": {
+                    "pass": "applications/nextcloud/direct",
+                    "response_headers": {
+                        "Referrer-Policy":                   "no-referrer",
+                        "X-Content-Type-Options":            "nosniff",
+                        "X-Frame-Options":                   "SAMEORIGIN",
+                        "X-Permitted-Cross-Domain-Policies": "none",
+                        "X-Robots-Tag":                      "noindex, nofollow"
+                    }
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "*.php",
+                        "*.php/*"
+                    ]
+                },
+                "action": {
+                    "pass": "applications/nextcloud/index",
+                    "response_headers": {
+                        "Referrer-Policy":                   "no-referrer",
+                        "X-Content-Type-Options":            "nosniff",
+                        "X-Frame-Options":                   "SAMEORIGIN",
+                        "X-Permitted-Cross-Domain-Policies": "none",
+                        "X-Robots-Tag":                      "noindex, nofollow"
+                    }
+                }
+            },
+
+            {
+                "match": {
+                    "uri": "/remote/*"
+                },
+                "action": {
+                    "rewrite": "/remote.php$request_uri",
+                    "pass": "applications/nextcloud/direct"
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "*.css", "*.js", "*.mjs", "*.svg",
+                        "*.gif", "*.ico", "*.jpg", "*.jpeg",
+                        "*.png", "*.webp", "*.wasm", "*.tflite",
+                        "*.map", "*.ogg", "*.flac",
+                        "*.mp4", "*.webm"
+                    ]
+                },
+                "action": {
+                    "share": "/home/app$uri",
+                    "fallback": {
+                        "pass": "applications/nextcloud/index",
+                        "response_headers": {
+                            "Referrer-Policy":                   "no-referrer",
+                            "X-Content-Type-Options":            "nosniff",
+                            "X-Frame-Options":                   "SAMEORIGIN",
+                            "X-Permitted-Cross-Domain-Policies": "none",
+                            "X-Robots-Tag":                      "noindex, nofollow"
+                        }
+                    },
+                    "response_headers": {
+                        "Cache-Control":                     "public, max-age=15778463",
+                        "Referrer-Policy":                   "no-referrer",
+                        "X-Content-Type-Options":            "nosniff",
+                        "X-Frame-Options":                   "SAMEORIGIN",
+                        "X-Permitted-Cross-Domain-Policies": "none",
+                        "X-Robots-Tag":                      "noindex, nofollow"
+                    }
+                }
+            },
+
+            {
+                "match": {
+                    "uri": [
+                        "*.otf", "*.woff", "*.woff2"
+                    ]
+                },
+                "action": {
+                    "share": "/home/app$uri",
+                    "fallback": {
+                        "pass": "applications/nextcloud/index"
+                    },
+                    "response_headers": {
+                        "Cache-Control": "public, max-age=604800"
+                    }
+                }
+            },
+
+            {
+                "action": {
+                    "share": "/home/app$uri",
+                    "fallback": {
+                        "pass": "applications/nextcloud/index",
+                        "response_headers": {
+                            "Referrer-Policy":                   "no-referrer",
+                            "X-Content-Type-Options":            "nosniff",
+                            "X-Frame-Options":                   "SAMEORIGIN",
+                            "X-Permitted-Cross-Domain-Policies": "none",
+                            "X-Robots-Tag":                      "noindex, nofollow"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+
+    "applications": {
+        "nextcloud": {
+            "type": "php",
+            "limits": {
+                "timeout": 600,
+                "requests": 2000
+            },
+            "processes": {
+                "max": 64,
+                "spare": 16,
+                "idle_timeout": 60
+            },
+            "targets": {
+                "direct": {
+                    "root": "/home/app/"
+                },
+                "index": {
+                    "root": "/home/app/",
+                    "script": "index.php"
+                }
+            },
+            "environment": {
+                "modHeadersAvailable":     "true",
+                "front_controller_active": "true"
+            }
+        }
+    }
+}

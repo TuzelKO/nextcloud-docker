@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: ../images/app
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: "${PHP_VERSION:-85}"
+    environment:
+      # Mailing configuration
+      NEXTCLOUD_SMTP_MODE: ${NEXTCLOUD_SMTP_MODE}
+      NEXTCLOUD_SMTP_HOST: ${NEXTCLOUD_SMTP_HOST}
+      NEXTCLOUD_SMTP_PORT: ${NEXTCLOUD_SMTP_PORT}
+      NEXTCLOUD_SMTP_SECURE: ${NEXTCLOUD_SMTP_SECURE}
+      NEXTCLOUD_SMTP_AUTH: ${NEXTCLOUD_SMTP_AUTH}
+      NEXTCLOUD_SMTP_AUTH_TYPE: ${NEXTCLOUD_SMTP_AUTH_TYPE}
+      NEXTCLOUD_SMTP_USER: ${NEXTCLOUD_SMTP_USER}
+      NEXTCLOUD_SMTP_PASSWORD: ${NEXTCLOUD_SMTP_PASSWORD}
+    networks:
+      - mail-network
+    depends_on:
+      - mailcatcher
+
+  mailcatcher:
+    image: jeanberu/mailcatcher:latest
+    ports:
+      - "1080:1080"
+    networks:
+      - mail-network
+    command: "mailcatcher --no-quit --foreground --smtp-port=${NEXTCLOUD_SMTP_PORT} --ip=0.0.0.0"
+    restart: always
+
+networks:
+  mail-network:
+    driver: bridge
