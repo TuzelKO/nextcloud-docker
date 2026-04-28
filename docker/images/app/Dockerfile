@@ -38,6 +38,7 @@ RUN apk update && apk upgrade && apk add \
         php${PHP_VERSION}-gd \
         php${PHP_VERSION}-gmp \
         php${PHP_VERSION}-intl \
+        php${PHP_VERSION}-iconv \
         php${PHP_VERSION}-json \
         php${PHP_VERSION}-mbstring \
         php${PHP_VERSION}-pcntl \
